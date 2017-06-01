@@ -1,0 +1,565 @@
+# Telegraf Configuration
+#
+# Telegraf is entirely plugin driven. All metrics are gathered from the
+# declared inputs, and sent to the declared outputs.
+#
+# Plugins must be declared in here to be active.
+# To deactivate a plugin, comment out the name and any variables.
+#
+# Use 'telegraf -config telegraf.conf -test' to see what metrics a config
+# file would generate.
+#
+# Environment variables can be used anywhere in this config file, simply prepend
+# them with $. For strings the variable must be within quotes (ie, "$STR_VAR"),
+# for numbers and booleans they should be plain (ie, $INT_VAR, $BOOL_VAR)
+
+
+# Global tags can be specified here in key="value" format.
+[global_tags]
+  # dc = "us-east-1" # will tag all metrics with dc=us-east-1
+  # rack = "1a"
+  ## Environment variables can be used as tags, and throughout the config file
+  # user = "$USER"
+
+
+# Configuration for telegraf agent
+[agent]
+  ## Default data collection interval for all inputs
+  interval = "10s"
+  ## Rounds collection interval to 'interval'
+  ## ie, if interval="10s" then always collect on :00, :10, :20, etc.
+  round_interval = true
+
+  ## Telegraf will send metrics to outputs in batches of at most
+  ## metric_batch_size metrics.
+  ## This controls the size of writes that Telegraf sends to output plugins.
+  metric_batch_size = 1000
+
+  ## For failed writes, telegraf will cache metric_buffer_limit metrics for each
+  ## output, and will flush this buffer on a successful write. Oldest metrics
+  ## are dropped first when this buffer fills.
+  ## This buffer only fills when writes fail to output plugin(s).
+  metric_buffer_limit = 10000
+
+  ## Collection jitter is used to jitter the collection by a random amount.
+  ## Each plugin will sleep for a random time within jitter before collecting.
+  ## This can be used to avoid many plugins querying things like sysfs at the
+  ## same time, which can have a measurable effect on the system.
+  collection_jitter = "0s"
+
+  ## Default flushing interval for all outputs. You shouldn't set this below
+  ## interval. Maximum flush_interval will be flush_interval + flush_jitter
+  flush_interval = "10s"
+  ## Jitter the flush interval by a random amount. This is primarily to avoid
+  ## large write spikes for users running a large number of telegraf instances.
+  ## ie, a jitter of 5s and interval 10s means flushes will happen every 10-15s
+  flush_jitter = "0s"
+
+  ## By default or when set to "0s", precision will be set to the same
+  ## timestamp order as the collection interval, with the maximum being 1s.
+  ##   ie, when interval = "10s", precision will be "1s"
+  ##       when interval = "250ms", precision will be "1ms"
+  ## Precision will NOT be used for service inputs. It is up to each individual
+  ## service input to set the timestamp at the appropriate precision.
+  precision = ""
+
+  ## Logging configuration:
+  ## Run telegraf with debug log messages.
+  debug = false
+  ## Run telegraf in quiet mode (error log messages only).
+  quiet = false
+  ## Specify the log file name. The empty string means to log to stderr.
+  logfile = ""
+
+  ## Override default hostname, if empty use os.Hostname()
+  hostname = "$VAR_TELEGRAF_HOSTNAME"
+  ## If set to true, do no set the "host" tag in the telegraf agent.
+  omit_hostname = false
+
+
+###############################################################################
+#                            OUTPUT PLUGINS                                   #
+###############################################################################
+
+# Configuration for influxdb server to send metrics to
+[[outputs.influxdb]]
+  ## The HTTP or UDP URL for your InfluxDB instance.  Each item should be
+  ## of the form:
+  ##   scheme "://" host [ ":" port]
+  ##
+  ## Multiple urls can be specified as part of the same cluster,
+  ## this means that only ONE of the urls will be written to each interval.
+  # urls = ["udp://localhost:8089"] # UDP endpoint example
+  urls = ["http://$VAR_INFLUXDB_HOSTNAME:8086"] # required
+  ## The target database for metrics (telegraf will create it if not exists).
+  database = "$VAR_INFLUXDB_DATABASE" # required
+
+  ## Name of existing retention policy to write to.  Empty string writes to
+  ## the default retention policy.
+  retention_policy = ""
+  ## Write consistency (clusters only), can be: "any", "one", "quorum", "all"
+  write_consistency = "any"
+
+  ## Write timeout (for the InfluxDB client), formatted as a string.
+  ## If not provided, will default to 5s. 0s means no timeout (not recommended).
+  timeout = "5s"
+  username = "$VAR_INFLUXDB_USER"
+  password = "$VAR_INLFUXDB_PASSWORD"
+  ## Set the user agent for HTTP POSTs (can be useful for log differentiation)
+  # user_agent = "telegraf"
+  ## Set UDP payload size, defaults to InfluxDB UDP Client default (512 bytes)
+  # udp_payload = 512
+
+  ## Optional SSL Config
+  # ssl_ca = "/etc/telegraf/ca.pem"
+  # ssl_cert = "/etc/telegraf/cert.pem"
+  # ssl_key = "/etc/telegraf/key.pem"
+  ## Use SSL but skip chain & host verification
+  # insecure_skip_verify = false
+
+# # Configuration for AWS CloudWatch output.
+# [[outputs.cloudwatch]]
+#   ## Amazon REGION
+#   region = "us-east-1"
+#
+#   ## Amazon Credentials
+#   ## Credentials are loaded in the following order
+#   ## 1) Assumed credentials via STS if role_arn is specified
+#   ## 2) explicit credentials from 'access_key' and 'secret_key'
+#   ## 3) shared profile from 'profile'
+#   ## 4) environment variables
+#   ## 5) shared credentials file
+#   ## 6) EC2 Instance Profile
+#   #access_key = ""
+#   #secret_key = ""
+#   #token = ""
+#   #role_arn = ""
+#   #profile = ""
+#   #shared_credential_file = ""
+#
+#   ## Namespace for the CloudWatch MetricDatums
+#   namespace = "InfluxData/Telegraf"
+
+
+# # Configuration for Elasticsearch to send metrics to.
+# [[outputs.elasticsearch]]
+#   ## The full HTTP endpoint URL for your Elasticsearch instance
+#   ## Multiple urls can be specified as part of the same cluster,
+#   ## this means that only ONE of the urls will be written to each interval.
+#   urls = [ "http://node1.es.example.com:9200" ] # required.
+#   ## Elasticsearch client timeout, defaults to "5s" if not set.
+#   timeout = "5s"
+#   ## Set to true to ask Elasticsearch a list of all cluster nodes,
+#   ## thus it is not necessary to list all nodes in the urls config option.
+#   enable_sniffer = false
+#   ## Set the interval to check if the Elasticsearch nodes are available
+#   ## Setting to "0s" will disable the health check (not recommended in production)
+#   health_check_interval = "10s"
+#   ## HTTP basic authentication details (eg. when using Shield)
+#   # username = "telegraf"
+#   # password = "mypassword"
+#
+#   ## Index Config
+#   ## The target index for metrics (Elasticsearch will create if it not exists).
+#   ## You can use the date specifiers below to create indexes per time frame.
+#   ## The metric timestamp will be used to decide the destination index name
+#   # %Y - year (2016)
+#   # %y - last two digits of year (00..99)
+#   # %m - month (01..12)
+#   # %d - day of month (e.g., 01)
+#   # %H - hour (00..23)
+#   index_name = "telegraf-%Y.%m.%d" # required.
+#
+#   ## Template Config
+#   ## Set to true if you want telegraf to manage its index template.
+#   ## If enabled it will create a recommended index template for telegraf indexes
+#   manage_template = true
+#   ## The template name used for telegraf indexes
+#   template_name = "telegraf"
+#   ## Set to true if you want telegraf to overwrite an existing template
+#   overwrite_template = false
+
+###############################################################################
+#                            INPUT PLUGINS                                    #
+###############################################################################
+
+# Read metrics about cpu usage
+[[inputs.cpu]]
+  ## Whether to report per-cpu stats or not
+  percpu = true
+  ## Whether to report total system cpu stats or not
+  totalcpu = true
+  ## If true, collect raw CPU time metrics.
+  collect_cpu_time = false
+
+
+# Read metrics about disk usage by mount point
+[[inputs.disk]]
+  ## By default, telegraf gather stats for all mountpoints.
+  ## Setting mountpoints will restrict the stats to the specified mountpoints.
+  # mount_points = ["/"]
+
+  ## Ignore some mountpoints by filesystem type. For example (dev)tmpfs (usually
+  ## present on /run, /var/run, /dev/shm or /dev).
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs"]
+
+
+# Read metrics about disk IO by device
+[[inputs.diskio]]
+  ## By default, telegraf will gather stats for all devices including
+  ## disk partitions.
+  ## Setting devices will restrict the stats to the specified devices.
+  # devices = ["sda", "sdb"]
+  ## Uncomment the following line if you need disk serial numbers.
+  # skip_serial_number = false
+  #
+  ## On systems which support it, device metadata can be added in the form of
+  ## tags.
+  ## Currently only Linux is supported via udev properties. You can view
+  ## available properties for a device by running:
+  ## 'udevadm info -q property -n /dev/sda'
+  # device_tags = ["ID_FS_TYPE", "ID_FS_USAGE"]
+  #
+  ## Using the same metadata source as device_tags, you can also customize the
+  ## name of the device via templates.
+  ## The 'name_templates' parameter is a list of templates to try and apply to
+  ## the device. The template may contain variables in the form of '$PROPERTY' or
+  ## '${PROPERTY}'. The first template which does not contain any variables not
+  ## present for the device is used as the device name tag.
+  ## The typical use case is for LVM volumes, to get the VG/LV name instead of
+  ## the near-meaningless DM-0 name.
+  # name_templates = ["$ID_FS_LABEL","$DM_VG_NAME/$DM_LV_NAME"]
+
+
+# Get kernel statistics from /proc/stat
+[[inputs.kernel]]
+  # no configuration
+
+
+# Read metrics about memory usage
+[[inputs.mem]]
+  # no configuration
+
+
+# Get the number of processes and group them by status
+[[inputs.processes]]
+  # no configuration
+
+
+# Read metrics about swap memory usage
+[[inputs.swap]]
+  # no configuration
+
+
+# Read metrics about system load & uptime
+[[inputs.system]]
+  # no configuration
+
+
+# # Read Apache status information (mod_status)
+# [[inputs.apache]]
+#   ## An array of Apache status URI to gather stats.
+#   ## Default is "http://localhost/server-status?auto".
+#   urls = ["http://localhost/server-status?auto"]
+#   ## user credentials for basic HTTP authentication
+#   username = "myuser"
+#   password = "mypassword"
+#
+#   ## Timeout to the complete conection and reponse time in seconds
+#   response_timeout = "25s" ## default to 5 seconds
+#
+#   ## Optional SSL Config
+#   # ssl_ca = "/etc/telegraf/ca.pem"
+#   # ssl_cert = "/etc/telegraf/cert.pem"
+#   # ssl_key = "/etc/telegraf/key.pem"
+#   ## Use SSL but skip chain & host verification
+#   # insecure_skip_verify = false
+
+
+{%- if VAR_TELEGRAF_ELASTICSEARCH %}
+# # Read stats from one or more Elasticsearch servers or clusters
+ [[inputs.elasticsearch]]
+#   ## specify a list of one or more Elasticsearch servers
+#   # you can add username and password to your url to use basic authentication:
+#   # servers = ["http://user:pass@localhost:9200"]
+#   servers = ["http://$VAR_TELEGRAF_HOSTNAME:$VAR_TELEGRAF_ELASTICSEARCH"]
+#
+#   ## Timeout for HTTP requests to the elastic search server(s)
+#   http_timeout = "5s"
+#
+#   ## When local is true (the default), the node will read only its own stats.
+#   ## Set local to false when you want to read the node stats from all nodes
+#   ## of the cluster.
+#   local = true
+#
+#   ## Set cluster_health to true when you want to also obtain cluster health stats
+#   cluster_health = false
+#
+#   ## Set cluster_stats to true when you want to also obtain cluster stats from the
+#   ## Master node.
+#   cluster_stats = false
+#
+#   ## Optional SSL Config
+#   # ssl_ca = "/etc/telegraf/ca.pem"
+#   # ssl_cert = "/etc/telegraf/cert.pem"
+#   # ssl_key = "/etc/telegraf/key.pem"
+#   ## Use SSL but skip chain & host verification
+#   # insecure_skip_verify = false
+{%- endif %}
+
+# # Read metrics from one or more commands that can output to stdout
+# [[inputs.exec]]
+#   ## Commands array
+#   commands = [
+#     "/tmp/test.sh",
+#     "/usr/bin/mycollector --foo=bar",
+#     "/tmp/collect_*.sh"
+#   ]
+#
+#   ## Timeout for each command to complete.
+#   timeout = "5s"
+#
+#   ## measurement name suffix (for separating different commands)
+#   name_suffix = "_mycollector"
+#
+#   ## Data format to consume.
+#   ## Each data format has its own unique set of configuration options, read
+#   ## more about them here:
+#   ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md
+#   data_format = "influx"
+
+
+{%- if VAR_TELEGRAF_MEMCACHED %}
+ # Read metrics from one or many memcached servers
+ [[inputs.memcached]]
+   ## An array of address to gather stats about. Specify an ip on hostname
+   ## with optional port. ie localhost, 10.0.0.1:11211, etc.
+   #servers = ["localhost:11211"]
+   servers = $VAR_TELEGRAF_MEMCACHED
+   # unix_sockets = ["/var/run/memcached.sock"]
+{%- endif %}
+
+
+{%- if VAR_TELEGRAF_MYSQL %}
+# Read metrics from one or many mysql servers
+ [[inputs.mysql]]
+   ## specify servers via a url matching:
+   ##  [username[:password]@][protocol[(address)]]/[?tls=[true|false|skip-verify]]
+   ##  see https://github.com/go-sql-driver/mysql#dsn-data-source-name
+   ##  e.g.
+   ##    servers = ["user:passwd@tcp(127.0.0.1:3306)/?tls=false"]
+   ##    servers = ["user@tcp(127.0.0.1:3306)/?tls=false"]
+   #
+   ## If no servers are specified, then localhost is used as the host.
+   #servers = ["tcp(127.0.0.1:3306)/"]
+   servers = ["{{VAR_TELEGRAF_MYSQL['username']}}:{{ VAR_TELEGRAF_MYSQL['password']}}@tcp($VAR_TELEGRAF_HOSTNAME:3306)/"]
+   ## the limits for metrics form perf_events_statements
+   perf_events_statements_digest_text_limit  = 120
+   perf_events_statements_limit              = 250
+   perf_events_statements_time_limit         = 86400
+   #
+   ## if the list is empty, then metrics are gathered from all databasee tables
+   table_schema_databases                    = []
+   #
+   ## gather metrics from INFORMATION_SCHEMA.TABLES for databases provided above list
+   gather_table_schema                       = false
+   #
+   ## gather thread state counts from INFORMATION_SCHEMA.PROCESSLIST
+   gather_process_list                       = true
+   #
+   ## gather thread state counts from INFORMATION_SCHEMA.USER_STATISTICS
+   gather_user_statistics                    = true
+   #
+   ## gather auto_increment columns and max values from information schema
+   gather_info_schema_auto_inc               = true
+   #
+   ## gather metrics from INFORMATION_SCHEMA.INNODB_METRICS
+   gather_innodb_metrics                     = true
+   #
+   ## gather metrics from SHOW SLAVE STATUS command output
+   gather_slave_status                       = true
+   #
+   ## gather metrics from SHOW BINARY LOGS command output
+   gather_binary_logs                        = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.TABLE_IO_WAITS_SUMMARY_BY_TABLE
+   gather_table_io_waits                     = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.TABLE_LOCK_WAITS
+   gather_table_lock_waits                   = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.TABLE_IO_WAITS_SUMMARY_BY_INDEX_USAGE
+   gather_index_io_waits                     = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.EVENT_WAITS
+   gather_event_waits                        = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.FILE_SUMMARY_BY_EVENT_NAME
+   gather_file_events_stats                  = false
+   #
+   ## gather metrics from PERFORMANCE_SCHEMA.EVENTS_STATEMENTS_SUMMARY_BY_DIGEST
+   gather_perf_events_statements             = false
+   #
+   ## Some queries we may want to run less often (such as SHOW GLOBAL VARIABLES)
+   interval_slow                   = "30m"
+{%- endif %}
+
+# # Read metrics about network interface usage
+# [[inputs.net]]
+#   ## By default, telegraf gathers stats from any up interface (excluding loopback)
+#   ## Setting interfaces will tell it to gather these explicit interfaces,
+#   ## regardless of status.
+#   ##
+#   # interfaces = ["eth0"]
+
+
+# # TCP or UDP 'ping' given url and collect response time in seconds
+# [[inputs.net_response]]
+#   ## Protocol, must be "tcp" or "udp"
+#   ## NOTE: because the "udp" protocol does not respond to requests, it requires
+#   ## a send/expect string pair (see below).
+#   protocol = "tcp"
+#   ## Server address (default localhost)
+#   address = "localhost:80"
+#   ## Set timeout
+#   timeout = "1s"
+#
+#   ## Set read timeout (only used if expecting a response)
+#   read_timeout = "1s"
+#
+#   ## The following options are required for UDP checks. For TCP, they are
+#   ## optional. The plugin will send the given string to the server and then
+#   ## expect to receive the given 'expect' string back.
+#   ## string sent to the server
+#   # send = "ssh"
+#   ## expected string in answer
+#   # expect = "ssh"
+
+
+ # Read TCP metrics such as established, time wait and sockets counts.
+ [[inputs.netstat]]
+   # no configuration
+
+
+# # Read Nginx's basic status information (ngx_http_stub_status_module)
+# [[inputs.nginx]]
+#   ## An array of Nginx stub_status URI to gather stats.
+#   urls = ["http://localhost/status"]
+
+
+# # Read metrics of phpfpm, via HTTP status page or socket
+# [[inputs.phpfpm]]
+#   ## An array of addresses to gather stats about. Specify an ip or hostname
+#   ## with optional port and path
+#   ##
+#   ## Plugin can be configured in three modes (either can be used):
+#   ##   - http: the URL must start with http:// or https://, ie:
+#   ##       "http://localhost/status"
+#   ##       "http://192.168.130.1/status?full"
+#   ##
+#   ##   - unixsocket: path to fpm socket, ie:
+#   ##       "/var/run/php5-fpm.sock"
+#   ##      or using a custom fpm status path:
+#   ##       "/var/run/php5-fpm.sock:fpm-custom-status-path"
+#   ##
+#   ##   - fcgi: the URL must start with fcgi:// or cgi://, and port must be present, ie:
+#   ##       "fcgi://10.0.0.12:9000/status"
+#   ##       "cgi://10.0.10.12:9001/status"
+#   ##
+#   ## Example of multiple gathering from local socket and remove host
+#   ## urls = ["http://192.168.1.20/status", "/tmp/fpm.sock"]
+#   urls = ["http://localhost/status"]
+
+
+{%- if VAR_TELEGRAF_RABBITMQ %}
+# # Read metrics from one or many RabbitMQ servers via the management API
+ [[inputs.rabbitmq]]
+#   # url = "http://localhost:15672"
+#   # name = "rmq-server-1" # optional tag
+#   # username = "guest"
+#   # password = "guest"
+    url = "http://$VAR_TELEGRAF_HOST:15672"
+    username = "$VAR_TELEGRAF_RABBITMQ.username"
+    password = "$VAR_TELEGRAF_RABBITMQ.password"
+#
+#   ## Optional SSL Config
+#   # ssl_ca = "/etc/telegraf/ca.pem"
+#   # ssl_cert = "/etc/telegraf/cert.pem"
+#   # ssl_key = "/etc/telegraf/key.pem"
+#   ## Use SSL but skip chain & host verification
+#   # insecure_skip_verify = false
+#
+#   ## Optional request timeouts
+#   ##
+#   ## ResponseHeaderTimeout, if non-zero, specifies the amount of time to wait
+#   ## for a server's response headers after fully writing the request.
+#   # header_timeout = "3s"
+#   ##
+#   ## client_timeout specifies a time limit for requests made by this client.
+#   ## Includes connection time, any redirects, and reading the response body.
+#   # client_timeout = "4s"
+#
+#   ## A list of nodes to pull metrics about. If not specified, metrics for
+#   ## all nodes are gathered.
+#   # nodes = ["rabbit@node1", "rabbit@node2"]
+{%- endif %}
+
+{%- if VAR_TELEGRAF_REDIS %}
+# # Read metrics from one or many redis servers
+ [[inputs.redis]]
+#   ## specify servers via a url matching:
+#   ##  [protocol://][:password]@address[:port]
+#   ##  e.g.
+#   ##    tcp://localhost:6379
+#   ##    tcp://:password@192.168.99.100
+#   ##    unix:///var/run/redis.sock
+#   ##
+#   ## If no servers are specified, then localhost is used as the host.
+#   ## If no port is specified, 6379 is used
+#   servers = ["tcp://$VAR_TELEGRAF_HOSTNAME:6379"]
+{%- endif %}
+
+###############################################################################
+#                            SERVICE INPUT PLUGINS                            #
+###############################################################################
+ # Statsd Server
+ [[inputs.statsd]]
+   ## Address and port to host UDP listener on
+   service_address = ":8125"
+
+   ## The following configuration options control when telegraf clears it's cache
+   ## of previous values. If set to false, then telegraf will only clear it's
+   ## cache when the daemon is restarted.
+   ## Reset gauges every interval (default=true)
+   delete_gauges = true
+   ## Reset counters every interval (default=true)
+   delete_counters = true
+   ## Reset sets every interval (default=true)
+   delete_sets = true
+   ## Reset timings & histograms every interval (default=true)
+   delete_timings = true
+
+   ## Percentiles to calculate for timing & histogram stats
+   percentiles = [90]
+
+   ## separator to use between elements of a statsd metric
+   metric_separator = "_"
+
+   ## Parses tags in the datadog statsd format
+   ## http://docs.datadoghq.com/guides/dogstatsd/
+   parse_data_dog_tags = false
+
+   ## Statsd data translation templates, more info can be read here:
+   ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md#graphite
+   # templates = [
+   #     "cpu.* measurement*"
+   # ]
+
+   ## Number of UDP messages allowed to queue up, once filled,
+   ## the statsd server will start dropping packets
+   allowed_pending_messages = 10000
+
+   ## Number of timing/histogram values to track per-measurement in the
+   ## calculation of percentiles. Raising this limit increases the accuracy
+   ## of percentiles but also increases the memory usage and cpu time.
+   percentile_limit = 1000
