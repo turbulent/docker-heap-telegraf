@@ -13,16 +13,19 @@ Required config for telegraf to collect stats of host
 ```
 
 Environment variables:
-
+Required:
 ```
 VAR_TELEGRAF_HOSTNAME
 VAR_INFLUXDB_HOSTNAME
 VAR_INFLUXDB_DATABASE
 VAR_INFLUXDB_USER
 VAR_INLFUXDB_PASSWORD
+
+Optional:
+
 VAR_TELEGRAF_MEMCACHED: '["host:port","host2:port2"]'
 VAR_TELEGRAF_ELASTICSEARCH: port
 VAR_TELEGRAF_MYSQL: {"username": "readonly","password":"supersecretkgb"}
-VAR_TELEGRAF_REDIS: true 
+VAR_TELEGRAF_REDIS: port 
 VAR_TELEGRAF_RABBIT: {"username": "readonly","password":"supersecretkgb"}
 ```

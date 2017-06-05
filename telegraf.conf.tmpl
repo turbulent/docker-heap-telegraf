@@ -516,7 +516,7 @@
 #   ##
 #   ## If no servers are specified, then localhost is used as the host.
 #   ## If no port is specified, 6379 is used
-#   servers = ["tcp://$VAR_TELEGRAF_HOSTNAME:6379"]
+#   servers = ["tcp://$VAR_TELEGRAF_HOSTNAME:$VAR_TELEGRAF_REDIS"]
 {%- endif %}
 
 ###############################################################################
