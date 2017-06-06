@@ -23,7 +23,7 @@ VAR_INLFUXDB_PASSWORD
 
 Optional:
 
-VAR_TELEGRAF_MEMCACHED: '["host:port","host2:port2"]'
+VAR_TELEGRAF_MEMCACHED: '[port, port]'
 VAR_TELEGRAF_ELASTICSEARCH: port
 VAR_TELEGRAF_MYSQL: {"username": "readonly","password":"supersecretkgb"}
 VAR_TELEGRAF_REDIS: port 
