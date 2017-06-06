@@ -335,7 +335,8 @@
    ## An array of address to gather stats about. Specify an ip on hostname
    ## with optional port. ie localhost, 10.0.0.1:11211, etc.
    #servers = ["localhost:11211"]
-   servers = $VAR_TELEGRAF_MEMCACHED
+   #servers = $VAR_TELEGRAF_MEMCACHED
+   servers = [{%- for port in VAR_TELEGRAF_MEMCACHED %-}"{{VAR_TELEGRAF_HOSTNAME}}:{{port}}"{{"," if not loop.last}}{%- endfor %}
    # unix_sockets = ["/var/run/memcached.sock"]
 {%- endif %}
 
