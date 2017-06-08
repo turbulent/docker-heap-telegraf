@@ -26,6 +26,7 @@ Optional:
 VAR_TELEGRAF_MEMCACHED: '[port, port]'
 VAR_TELEGRAF_ELASTICSEARCH: port
 VAR_TELEGRAF_MYSQL: {"username": "readonly","password":"supersecretkgb"}
+VAR_TELEGRAF_MYSQL_USER_STATS: false # if not set to false will default to true
 VAR_TELEGRAF_REDIS: port 
 VAR_TELEGRAF_RABBIT: {"username": "readonly","password":"supersecretkgb"}
 ```

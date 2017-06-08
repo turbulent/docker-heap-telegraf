@@ -90,7 +90,7 @@
   ## Multiple urls can be specified as part of the same cluster,
   ## this means that only ONE of the urls will be written to each interval.
   # urls = ["udp://localhost:8089"] # UDP endpoint example
-  urls = ["http://$VAR_INFLUXDB_HOSTNAME:8086"] # required
+  urls = ["https://$VAR_INFLUXDB_HOSTNAME:8086"] # required
   ## The target database for metrics (telegraf will create it if not exists).
   database = "$VAR_INFLUXDB_DATABASE" # required
 
@@ -335,8 +335,7 @@
    ## An array of address to gather stats about. Specify an ip on hostname
    ## with optional port. ie localhost, 10.0.0.1:11211, etc.
    #servers = ["localhost:11211"]
-   #servers = $VAR_TELEGRAF_MEMCACHED
-   servers = [{%- for port in VAR_TELEGRAF_MEMCACHED %-}"{{VAR_TELEGRAF_HOSTNAME}}:{{port}}"{{"," if not loop.last}}{%- endfor %}
+   servers = [{%- for port in VAR_TELEGRAF_MEMCACHED -%}"{{ VAR_TELEGRAF_HOSTNAME }}:{{ port }}"{{ "," if not loop.last }}{%- endfor %}]
    # unix_sockets = ["/var/run/memcached.sock"]
 {%- endif %}
 
@@ -369,7 +368,7 @@
    gather_process_list                       = true
    #
    ## gather thread state counts from INFORMATION_SCHEMA.USER_STATISTICS
-   gather_user_statistics                    = true
+   gather_user_statistics                    = {{ VAR_TELEGRAF_MYSQL_USER_STATS|lower|default ('true') }}
    #
    ## gather auto_increment columns and max values from information schema
    gather_info_schema_auto_inc               = true
