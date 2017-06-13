@@ -1,3 +1,9 @@
+# heap-telegraph Docker Image
+
+Telegraf image for Heap-based hosting environments.
+
+## Configuration
+
 Required config for telegraf to collect stats of host
 
 ```
@@ -12,17 +18,21 @@ Required config for telegraf to collect stats of host
    - /etc:/rootfs/etc:ro
 ```
 
-Environment variables:
+## Environment variables
+
 Required:
+
 ```
 VAR_TELEGRAF_HOSTNAME
 VAR_INFLUXDB_HOSTNAME
 VAR_INFLUXDB_DATABASE
 VAR_INFLUXDB_USER
 VAR_INLFUXDB_PASSWORD
+```
 
 Optional:
 
+```
 VAR_TELEGRAF_MEMCACHED: '[port, port]'
 VAR_TELEGRAF_ELASTICSEARCH: port
 VAR_TELEGRAF_MYSQL: {"username": "readonly","password":"supersecretkgb"}
@@ -31,3 +41,9 @@ VAR_TELEGRAF_MYSQL_INNODB_METRICS: true # if not set to false will default to fa
 VAR_TELEGRAF_REDIS: port 
 VAR_TELEGRAF_RABBIT: {"username": "readonly","password":"supersecretkgb"}
 ```
+
+## License
+
+All work found under this repository is licensed under the [Apache
+License 2.0](LICENSE).
+

@@ -1,4 +1,4 @@
-FROM docker-registry.turbulent.ca:5000/heap-base:2.0.3
+FROM turbulent/heap-base:2.0.3
 MAINTAINER Marc Alloul	<malloul@turbulent.ca>
 
 ENV heap-telegraf 1.0.0
